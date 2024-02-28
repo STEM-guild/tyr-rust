@@ -5,7 +5,6 @@ mod commands;
 use poise::serenity_prelude as serenity;
 use std::{
     collections::HashMap,
-    env::var,
     sync::{Arc, Mutex},
     time::Duration,
 };
@@ -43,7 +42,7 @@ async fn main() {
     // FrameworkOptions contains all of poise's configuration option in one struct
     // Every option can be omitted to use its default value
     let options = poise::FrameworkOptions {
-        commands: vec![commands::help(), commands::ping(), commands::vote(), commands::getvotes()],
+        commands: vec![commands::help(), commands::ping(), commands::vote(), commands::getvotes(), commands::poll()],
         prefix_options: poise::PrefixFrameworkOptions {
             prefix: Some("!".into()),
             edit_tracker: Some(Arc::new(poise::EditTracker::for_timespan(
