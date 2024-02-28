@@ -1,3 +1,7 @@
+use std::str::FromStr;
+
+use poise::serenity_prelude::{self, futures::TryFutureExt, ReactionType};
+
 use crate::{Context, Error};
 
 /// Show this help menu
@@ -77,7 +81,30 @@ pub async fn getvotes(
 }
 
 #[poise::command(prefix_command, track_edits, slash_command)]
-pub async fn ping(ctx: Context<'_>) -> Result<(), Error> {
-    ctx.say("Poise!").await?;
+pub async fn ping(_ctx: Context<'_>) -> Result<(), Error> {
+    Ok(())
+}
+
+#[poise::command(prefix_command, aliases("makepoll"))]
+pub async fn poll(
+    ctx: Context<'_>,
+    #[description = "unused : is there a way to get a list of options?"] _i_dont_know_how_to_get_alist_of_options: Vec<String>,
+) -> Result<(), Error> {
+    // ctx.say(ctx.invocation_string()).await?;
+    let mut potential_emotes: Vec<&str> = vec![];
+    ctx.say(ctx.invocation_string().split("\n").skip(1).map(|x| {
+        let trying = x.split(" ").next().unwrap();
+        potential_emotes.push(trying);
+        format!("{}", x)
+    }).fold("".into(), |acc, e| { format!("{}{}\n", acc, e) })).await?.into_message().and_then(|x| async move {
+        for potential in potential_emotes {
+            if let Some(reaction) = serenity_prelude::parse_emoji(potential) {
+                x.react(ctx.http(), reaction).await?;
+            } else {
+                x.react(ctx.http(), ReactionType::from_str(potential).unwrap()).await?;
+            }
+        }
+        Ok(())
+    }).await?;
     Ok(())
 }
