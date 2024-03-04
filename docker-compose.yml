@@ -1,0 +1,30 @@
+services:
+  rust-dev:
+    #stdin_open: true # docker run -i
+    #tty: true
+    env_file:
+      - .env
+    build:
+      dockerfile: docker/bot/Dockerfile
+      context: .
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+
+  db:
+    build:
+      context: .
+      dockerfile: docker/postgres/Dockerfile
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: localdb
+      POSTGRES_USER: localdb
+      POSTGRES_PASSWORD: localdb
+    expose:
+      - 5432:5432
+    volumes:
+      - stembot-postgres-data:/var/lib/postgresql/data
+
+volumes:
+  stembot-postgres-data:
