@@ -1,23 +1,39 @@
 #![warn(clippy::str_to_string)]
 
-use poise::serenity_prelude as serenity;
+mod commands;
 
+use poise::serenity_prelude as serenity;
 use std::{
     collections::HashMap,
     sync::{Arc, Mutex},
     time::Duration,
 };
 
-use utils::{
-    base::Data,
-    functions::on_error
-};
+// Types used by all command functions
+type Error = Box<dyn std::error::Error + Send + Sync>;
+type Context<'a> = poise::Context<'a, Data, Error>;
 
+// Custom user data passed to all command functions
+pub struct Data {
+    votes: Mutex<HashMap<String, u32>>,
+}
 
-mod commands;
-mod utils;
-
-// [#]==========================================================================================[#]
+async fn on_error(error: poise::FrameworkError<'_, Data, Error>) {
+    // This is our custom error handler
+    // They are many errors that can occur, so we only handle the ones we want to customize
+    // and forward the rest to the default handler
+    match error {
+        poise::FrameworkError::Setup { error, .. } => panic!("Failed to start bot: {:?}", error),
+        poise::FrameworkError::Command { error, ctx, .. } => {
+            println!("Error in command `{}`: {:?}", ctx.command().name, error,);
+        }
+        error => {
+            if let Err(e) = poise::builtins::on_error(error).await {
+                println!("Error while handling error: {}", e)
+            }
+        }
+    }
+}
 
 #[tokio::main]
 async fn main() {
@@ -26,7 +42,7 @@ async fn main() {
     // FrameworkOptions contains all of poise's configuration option in one struct
     // Every option can be omitted to use its default value
     let options = poise::FrameworkOptions {
-        commands: vec![commands::messages::say()],
+        commands: vec![commands::help(), commands::ping(), commands::vote(), commands::getvotes(), commands::poll()],
         prefix_options: poise::PrefixFrameworkOptions {
             prefix: Some("!".into()),
             edit_tracker: Some(Arc::new(poise::EditTracker::for_timespan(
