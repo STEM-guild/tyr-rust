@@ -1,6 +1,8 @@
 #![warn(clippy::str_to_string)]
 
 mod commands;
+mod commands_old; //legacy commands to be moved into the /commands/ dir
+mod utils;
 
 use poise::serenity_prelude as serenity;
 use std::{
@@ -42,7 +44,7 @@ async fn main() {
     // FrameworkOptions contains all of poise's configuration option in one struct
     // Every option can be omitted to use its default value
     let options = poise::FrameworkOptions {
-        commands: vec![commands::help(), commands::ping(), commands::vote(), commands::getvotes(), commands::poll()],
+        commands: vec![commands_old::help(), commands_old::ping(), commands_old::vote(), commands_old::getvotes(), commands_old::poll()],
         prefix_options: poise::PrefixFrameworkOptions {
             prefix: Some("!".into()),
             edit_tracker: Some(Arc::new(poise::EditTracker::for_timespan(
