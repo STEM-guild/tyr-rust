@@ -2,14 +2,17 @@
 
 mod commands;
 mod commands_old; //legacy commands to be moved into the /commands/ dir
+mod event_handlers;
 mod utils;
 
-use poise::serenity_prelude as serenity;
+use poise::serenity_prelude::{self as serenity, ChannelId};
 use std::{
     collections::HashMap,
     sync::{Arc, Mutex},
     time::Duration,
 };
+
+use crate::event_handlers::handlers::{on_reaction_add, on_reaction_remove};
 
 // Types used by all command functions
 type Error = Box<dyn std::error::Error + Send + Sync>;
@@ -44,7 +47,13 @@ async fn main() {
     // FrameworkOptions contains all of poise's configuration option in one struct
     // Every option can be omitted to use its default value
     let options = poise::FrameworkOptions {
-        commands: vec![commands_old::help(), commands_old::ping(), commands_old::vote(), commands_old::getvotes(), commands_old::poll()],
+        commands: vec![
+            commands_old::help(),
+            commands_old::ping(),
+            commands_old::vote(),
+            commands_old::getvotes(),
+            commands_old::poll(),
+        ],
         prefix_options: poise::PrefixFrameworkOptions {
             prefix: Some("!".into()),
             edit_tracker: Some(Arc::new(poise::EditTracker::for_timespan(
@@ -74,7 +83,7 @@ async fn main() {
         command_check: Some(|ctx| {
             Box::pin(async move {
                 if ctx.author().id == 123456789 {
-                //    return Ok(false);
+                    //    return Ok(false);
                 }
                 Ok(true)
             })
@@ -82,8 +91,25 @@ async fn main() {
         // Enforce command checks even for owners (enforced by default)
         // Set to true to bypass checks, which is useful for testing
         skip_checks_for_owners: false,
-        event_handler: |_ctx, event, _framework, _data| {
+        event_handler: |_ctx: &serenity::prelude::Context, event, _framework, _data| {
             Box::pin(async move {
+                match event {
+                    serenity::FullEvent::ReactionAdd { add_reaction } => {
+                        let reaction_log: ChannelId = dotenv::var("REACTION_LOG_CHANNEL_ID")
+                            .expect("Could not find reaction log id.")
+                            .parse()
+                            .expect("Invalid Channel Id passed into the env.");
+                        on_reaction_add(_ctx, add_reaction.clone(), reaction_log).await;
+                    }
+                    serenity::FullEvent::ReactionRemove { removed_reaction } => {
+                        let reaction_log: ChannelId = dotenv::var("REACTION_LOG_CHANNEL_ID")
+                            .expect("Could not find reaction log id.")
+                            .parse()
+                            .expect("Invalid Channel Id passed into the env.");
+                        on_reaction_remove(_ctx, removed_reaction.clone(), reaction_log).await;
+                    }
+                    _ => {}
+                }
                 println!(
                     "Got an event in event handler: {:?}",
                     event.snake_case_name()
