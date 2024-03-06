@@ -138,6 +138,7 @@ pub async fn jask(
 // once docs are written, we should add a "how to ask question" channel and add that to the message
 // maybe having this in an embed would be better, we can experiment.
 // perhaps Tyr can ping the user in a help text channel if it's not too busy? or maybe create a post in forum? that will self-dstruct? many options - none desprate.
+// once DB is up we should have some kind of dictionary with aliases and channel IDs so this gross match clause can be removed.
 #[poise::command(slash_command, prefix_command)]
 pub async fn ask(
     ctx: Context<'_>,
@@ -165,6 +166,9 @@ pub async fn ask(
         }
         "coding" | "programming" | "cs" | "computer science" | "tech" => {
             redirect = format!("<#{}> or <#{}>, ping helpers, and wait for someone to respond.", channel_id_from_key("PROGRAMMING_HELP_TEXT_ID").expect("Could not get channel ID"), channel_id_from_key("PROGRAMMING_HELP_FORUM_ID").expect("Could not get channel ID"));
+        }
+        "psychology" => {
+            redirect = format!("<#{}>, ping helpers, and wait for someone to respond.", channel_id_from_key("PSYCHOLOGY_HELP_TEXT_ID").expect("Could not get channel ID"));
         }
         "other" | "other help" => {
             redirect = format!("<#{}> or <#{}>, ping helpers, and wait for someone to respond.", channel_id_from_key("OTHER_HELP_TEXT_ID").expect("Could not get channel ID"), channel_id_from_key("OTHER_HELP_FORUM_ID").expect("Could not get channel ID"));
