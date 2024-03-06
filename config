@@ -1,0 +1,2 @@
+[filter "secrets"]
+	clean = "sed '/^# start git-ignore/,/^# end git-ignore/d;'"
