@@ -1,6 +1,7 @@
 use poise::serenity_prelude::{ self as serenity, futures::TryFutureExt, ReactionType };
 use crate::utils::base::{ Context, Error };
 use std::str::FromStr;
+use std::num::ParseIntError;
 
 #[poise::command(slash_command, prefix_command)]
 pub async fn say(
@@ -111,4 +112,93 @@ pub async fn poll(
         Ok(())
     }).await?;
     Ok(())
+}
+
+// posts a useful link to the dont ask to ask website.
+
+// maybe having this in an embed would be better, we can experiment
+#[poise::command(slash_command, prefix_command)]
+pub async fn jask(
+    ctx: Context<'_>,
+    #[description = "User to ping."] user: Option<poise::serenity_prelude::User>,
+) -> Result<(), Error> {
+    if user.as_ref() == None {
+        ctx.say("Don't ask to ask, just ask! We'll be happy to help! Read more [here](https://dontasktoask.com/).").await?;
+    } else {
+        let u = user.as_ref().unwrap();
+        let response = format!("Hey <@{}>, next time, don't ask to ask, just ask! We'll be happy to help! Read more [here](https://dontasktoask.com/).", u.id);
+        ctx.say(response).await?;
+    }
+    Ok(())
+}
+
+// This command helps keep #general clean by redircting new users to help channels
+
+// a few suggestion:
+// once docs are written, we should add a "how to ask question" channel and add that to the message
+// maybe having this in an embed would be better, we can experiment.
+// perhaps Tyr can ping the user in a help text channel if it's not too busy? or maybe create a post in forum? that will self-dstruct? many options - none desprate.
+#[poise::command(slash_command, prefix_command)]
+pub async fn ask(
+    ctx: Context<'_>,
+    #[description = "User to ping."] user: Option<poise::serenity_prelude::User>,
+    #[description = "The subject to redirect to."] subjects: Option<String>,
+) -> Result<(), Error> {
+    let def = &String::from_str("").unwrap();
+    let subject = subjects.as_ref().unwrap_or(def);
+    let redirect: String;
+    match subject.to_lowercase().as_str() {
+        "math" | "maths" => {
+            redirect = format!("<#{}> or <#{}>, ping helpers, and wait for someone to respond.", channel_id_from_key("MATHS_HELP_TEXT_ID").expect("Could not get channel ID"), channel_id_from_key("MATHS_HELP_FORUM_ID").expect("Could not get channel ID"));
+        }
+        "physics" => {
+            redirect = format!("<#{}> or <#{}>, ping helpers, and wait for someone to respond.", channel_id_from_key("PHYSICS_HELP_TEXT_ID").expect("Could not get channel ID"), channel_id_from_key("PHYSICS_HELP_FORUM_ID").expect("Could not get channel ID"));
+        }
+        "bio" | "biology" => {
+            redirect = format!("<#{}> or <#{}>, ping helpers, and wait for someone to respond.", channel_id_from_key("BIO_HELP_TEXT_ID").expect("Could not get channel ID"), channel_id_from_key("BIO_HELP_FORUM_ID").expect("Could not get channel ID"));
+        }
+        "chem" | "chemistry" => {
+            redirect = format!("<#{}> or <#{}>, ping helpers, and wait for someone to respond.", channel_id_from_key("CHEM_HELP_TEXT_ID").expect("Could not get channel ID"), channel_id_from_key("CHEM_HELP_FORUM_ID").expect("Could not get channel ID"));
+        }
+        "engineering" => {
+            redirect = format!("<#{}> or <#{}>, ping helpers, and wait for someone to respond.", channel_id_from_key("ENGINEERING_HELP_TEXT_ID").expect("Could not get channel ID"), channel_id_from_key("ENGINEERING_HELP_FORUM_ID").expect("Could not get channel ID"));
+        }
+        "coding" | "programming" | "cs" | "computer science" | "tech" => {
+            redirect = format!("<#{}> or <#{}>, ping helpers, and wait for someone to respond.", channel_id_from_key("PROGRAMMING_HELP_TEXT_ID").expect("Could not get channel ID"), channel_id_from_key("PROGRAMMING_HELP_FORUM_ID").expect("Could not get channel ID"));
+        }
+        "other" | "other help" => {
+            redirect = format!("<#{}> or <#{}>, ping helpers, and wait for someone to respond.", channel_id_from_key("OTHER_HELP_TEXT_ID").expect("Could not get channel ID"), channel_id_from_key("OTHER_HELP_FORUM_ID").expect("Could not get channel ID"));
+        }
+        &_ => {
+            redirect = format!("the help channel / forum of your choosing.")
+        }
+    }
+
+    if user.as_ref() == None {
+        let response = format!("Please post your question in {}", redirect);
+        ctx.say(response).await?;
+    } else {
+        let u = user.as_ref().unwrap();
+        let response = format!("Hey <@{}>, please post your question in {}", u.id, redirect);
+        ctx.say(response).await?;
+    }
+    Ok(())
+}
+
+
+// NOTE: this function should not be here once database is set up!!
+// will panic! not a good option long-term
+
+#[allow(dead_code)]
+fn channel_id_from_key(key: &str) -> Result<poise::serenity_prelude::model::id::ChannelId,ParseIntError>{
+    dotenv::dotenv().expect("Failed to load .env file");
+    let channel_id = dotenv::var(key).expect(&format!("Expected {} in the environment", key));        
+    match poise::serenity_prelude::model::id::ChannelId::from_str(&channel_id) {
+        Err(why) => {
+            Result::Err(why)
+        }
+        Ok(ok) => {
+            Result::Ok(ok)
+        }
+    }
 }

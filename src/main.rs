@@ -30,6 +30,8 @@ async fn main() {
             commands::messages::poll(),
             commands::dev::ping(),
             commands::user::check(),
+            commands::messages::jask(),
+            commands::messages::ask(),
         ],
         prefix_options: poise::PrefixFrameworkOptions {
             prefix: Some("!".into()),
