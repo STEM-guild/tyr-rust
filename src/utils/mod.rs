@@ -1,2 +1,2 @@
 pub mod base;
-pub mod functions;
+pub mod handlers;
