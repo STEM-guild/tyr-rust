@@ -6,6 +6,7 @@ mod commands;
 use poise::serenity_prelude as serenity;
 use std::{
     collections::HashMap,
+    str::FromStr,
     sync::{Arc, Mutex},
     time::Duration,
 };
@@ -32,6 +33,7 @@ async fn main() {
             commands::user::check(),
             commands::messages::jask(),
             commands::messages::ask(),
+            commands::dev::register(),
         ],
         prefix_options: poise::PrefixFrameworkOptions {
             prefix: Some("!".into()),
@@ -82,11 +84,14 @@ async fn main() {
         ..Default::default()
     };
 
+    dotenv::dotenv().expect("Failed to load .env file");
+    let guild_id = dotenv::var("GUILD_ID").expect("Expected a guild_id in the environment");
+
     let framework = poise::Framework::builder()
         .setup(move |ctx, _ready, framework| {
             Box::pin(async move {
                 println!("Logged in as {}", _ready.user.name);
-                poise::builtins::register_globally(ctx, &framework.options().commands).await?;
+                poise::builtins::register_in_guild(ctx, &framework.options().commands, serenity::GuildId::from_str(&guild_id).expect("invalid guild ID")).await?;
                 Ok(Data {
                     votes: Mutex::new(HashMap::new()),
                 })
