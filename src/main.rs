@@ -5,14 +5,11 @@ mod commands;
 
 use poise::serenity_prelude as serenity;
 use std::{
-    collections::HashMap,
-    str::FromStr,
-    sync::{Arc, Mutex},
-    time::Duration,
+    collections::HashMap, str::FromStr, sync::{Arc, Mutex}, time::Duration
 };
 
 use utils::{
-    base::Data,
+    base::{Data,Error},
     handlers::on_error,
 };
 
@@ -72,14 +69,8 @@ async fn main() {
         // Enforce command checks even for owners (enforced by default)
         // Set to true to bypass checks, which is useful for testing
         skip_checks_for_owners: false,
-        event_handler: |_ctx, event, _framework, _data| {
-            Box::pin(async move {
-                println!(
-                    "Got an event in event handler: {:?}",
-                    event.snake_case_name()
-                );
-                Ok(())
-            })
+        event_handler: |ctx, event, framework, data| {
+            Box::pin(event_handler(ctx, event, framework, data))
         },
         ..Default::default()
     };
@@ -110,4 +101,39 @@ async fn main() {
         .await;
 
     client.unwrap().start().await.unwrap()
+}
+
+async fn event_handler(
+    ctx: &serenity::Context,
+    event: &serenity::FullEvent,
+    _framework: poise::FrameworkContext<'_, Data, Error>,
+    _data: &Data,
+) -> Result<(), Error> {
+    match event {
+        serenity::FullEvent::Ready { data_about_bot, .. } => {
+            println!("Logged in as {}", data_about_bot.user.name);
+        }
+        serenity::FullEvent::MessageDelete { channel_id, deleted_message_id, guild_id: _ } => {
+            let message = serenity::cache::Cache::message(&ctx.cache, channel_id, deleted_message_id).unwrap();
+            //Http::get_message(&ctx.http, *channel_id, *deleted_message_id).await?;
+            let username = &message.author.name;
+            let other_name = "";
+            //message.author_nick(ctx.http).await.unwrap_or_else(|| message.author.global_name.as_mut().unwrap_or_else(|| &mut " ".to_string()).to_string());
+            //.author_nick(&ctx.http).await.unwrap_or_else(|| message.author.global_name.as_ref().unwrap_or_else(|| &String::from("")).to_owned());
+            let respose = format!("Message deleted. The message was sent by {} ({}, {}) in <#{}>:\n\"{}\"",
+                other_name,
+                username,
+                message.author.id.to_string(),
+                message.channel_id,
+                message.content
+            );
+            dotenv::dotenv().expect("Failed to load .env file");
+            let message_log_channel_id = dotenv::var("MESSAGE_LOG_CHANNEL_ID").expect("Expected a message_log_channel_id in the environment");
+
+            let c = serenity::ChannelId::from_str(&message_log_channel_id).expect("Invalid message_log_channel_id");
+            c.say(&ctx.http, respose);    
+        }
+        _ => {}
+    }
+    Ok(())
 }
