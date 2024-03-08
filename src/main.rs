@@ -10,9 +10,8 @@ use std::{
 
 use utils::{
     base::{Data,Error},
-    handlers::on_error,
+    handlers::{self, on_error},
 };
-
 
 #[tokio::main]
 async fn main() {
@@ -94,8 +93,8 @@ async fn main() {
     dotenv::dotenv().expect("Failed to load .env file");
     let token = dotenv::var("DISCORD_TOKEN").expect("Expected a token in the environment");
     let intents =
-        serenity::GatewayIntents::non_privileged() | serenity::GatewayIntents::MESSAGE_CONTENT;
-
+        serenity::GatewayIntents::non_privileged() | serenity::GatewayIntents::MESSAGE_CONTENT | serenity::GatewayIntents::GUILD_PRESENCES;
+        //                                                                                                ↑ for member caching ↑
     let client = serenity::ClientBuilder::new(token, intents)
         .framework(framework)
         .await;
@@ -111,27 +110,17 @@ async fn event_handler(
 ) -> Result<(), Error> {
     match event {
         serenity::FullEvent::Ready { data_about_bot, .. } => {
+            serenity::cache::Cache::set_max_messages(&ctx.cache, usize::MAX); // for running on lower end hardware, if need be, this should be reduced. cache clears every hour by default.
             println!("Logged in as {}", data_about_bot.user.name);
         }
-        serenity::FullEvent::MessageDelete { channel_id, deleted_message_id, guild_id: _ } => {
-            let message = serenity::cache::Cache::message(&ctx.cache, channel_id, deleted_message_id).unwrap();
-            //Http::get_message(&ctx.http, *channel_id, *deleted_message_id).await?;
-            let username = &message.author.name;
-            let other_name = "";
-            //message.author_nick(ctx.http).await.unwrap_or_else(|| message.author.global_name.as_mut().unwrap_or_else(|| &mut " ".to_string()).to_string());
-            //.author_nick(&ctx.http).await.unwrap_or_else(|| message.author.global_name.as_ref().unwrap_or_else(|| &String::from("")).to_owned());
-            let respose = format!("Message deleted. The message was sent by {} ({}, {}) in <#{}>:\n\"{}\"",
-                other_name,
-                username,
-                message.author.id.to_string(),
-                message.channel_id,
-                message.content
-            );
-            dotenv::dotenv().expect("Failed to load .env file");
-            let message_log_channel_id = dotenv::var("MESSAGE_LOG_CHANNEL_ID").expect("Expected a message_log_channel_id in the environment");
-
-            let c = serenity::ChannelId::from_str(&message_log_channel_id).expect("Invalid message_log_channel_id");
-            c.say(&ctx.http, respose);    
+        serenity::FullEvent::MessageDelete { channel_id, deleted_message_id, guild_id } => {
+            
+            match guild_id {
+                Some(guild_id) => {
+                    handlers::on_message_delete(ctx, channel_id, deleted_message_id, guild_id).await;
+                },
+                None => () // DM, so we can exit
+            }    
         }
         _ => {}
     }
