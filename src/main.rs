@@ -1,41 +1,21 @@
 #![warn(clippy::str_to_string)]
 
-mod commands;
-mod commands_old; //legacy commands to be moved into the /commands/ dir
 mod utils;
+mod commands;
 
 use poise::serenity_prelude as serenity;
 use std::{
     collections::HashMap,
+    str::FromStr,
     sync::{Arc, Mutex},
     time::Duration,
 };
 
-// Types used by all command functions
-type Error = Box<dyn std::error::Error + Send + Sync>;
-type Context<'a> = poise::Context<'a, Data, Error>;
+use utils::{
+    base::Data,
+    handlers::on_error,
+};
 
-// Custom user data passed to all command functions
-pub struct Data {
-    votes: Mutex<HashMap<String, u32>>,
-}
-
-async fn on_error(error: poise::FrameworkError<'_, Data, Error>) {
-    // This is our custom error handler
-    // They are many errors that can occur, so we only handle the ones we want to customize
-    // and forward the rest to the default handler
-    match error {
-        poise::FrameworkError::Setup { error, .. } => panic!("Failed to start bot: {:?}", error),
-        poise::FrameworkError::Command { error, ctx, .. } => {
-            println!("Error in command `{}`: {:?}", ctx.command().name, error,);
-        }
-        error => {
-            if let Err(e) = poise::builtins::on_error(error).await {
-                println!("Error while handling error: {}", e)
-            }
-        }
-    }
-}
 
 #[tokio::main]
 async fn main() {
@@ -44,7 +24,17 @@ async fn main() {
     // FrameworkOptions contains all of poise's configuration option in one struct
     // Every option can be omitted to use its default value
     let options = poise::FrameworkOptions {
-        commands: vec![commands_old::help(), commands_old::ping(), commands_old::vote(), commands_old::getvotes(), commands_old::poll()],
+        commands: vec![
+            commands::messages::help(), 
+            commands::messages::vote(), 
+            commands::messages::getvotes(), 
+            commands::messages::poll(),
+            commands::dev::ping(),
+            commands::user::check(),
+            commands::messages::jask(),
+            commands::messages::ask(),
+            commands::dev::register(),
+        ],
         prefix_options: poise::PrefixFrameworkOptions {
             prefix: Some("!".into()),
             edit_tracker: Some(Arc::new(poise::EditTracker::for_timespan(
@@ -94,11 +84,14 @@ async fn main() {
         ..Default::default()
     };
 
+    dotenv::dotenv().expect("Failed to load .env file");
+    let guild_id = dotenv::var("GUILD_ID").expect("Expected a guild_id in the environment");
+
     let framework = poise::Framework::builder()
         .setup(move |ctx, _ready, framework| {
             Box::pin(async move {
                 println!("Logged in as {}", _ready.user.name);
-                poise::builtins::register_globally(ctx, &framework.options().commands).await?;
+                poise::builtins::register_in_guild(ctx, &framework.options().commands, serenity::GuildId::from_str(&guild_id).expect("invalid guild ID")).await?;
                 Ok(Data {
                     votes: Mutex::new(HashMap::new()),
                 })
