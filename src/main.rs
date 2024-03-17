@@ -86,6 +86,10 @@ async fn main() {
 
     dotenv::dotenv().expect("Failed to load .env file");
     let guild_id = dotenv::var("GUILD_ID").expect("Expected a guild_id in the environment");
+    let DB_URL = dotenv::var("DATABASE_URL").expect("Expected a database url in the environment");
+    let DB_NAME = dotenv::var("DATABASE_NAME").expect("Expected a database name in the environment");
+
+    //utils::db::databaseRunner().await.expect("TODO: panic message");
 
     let framework = poise::Framework::builder()
         .setup(move |ctx, _ready, framework| {

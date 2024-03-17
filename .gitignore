@@ -1,2 +1,4 @@
 /target/
 /.vscode/
+/database.sqlite
+/database.sqlite-journal

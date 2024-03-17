@@ -9,3 +9,15 @@ dotenv = "0.15.0"
 poise = "0.6.1"
 tokio = { version = "1.36.0", features=["rt-multi-thread"] }
 env_logger = "0.11.2"
+openssl-sys = {version = "0.9.63", features = ["vendored"] }
+sea-orm = { version = "^0.12", features = [ "sqlx-sqlite", "sqlx-postgres", "runtime-tokio-rustls", "macros" ] }
+futures = "0.3.28"
+
+[dependencies.sea-orm-migration]
+version = "0.12"
+features = [
+    "runtime-tokio-rustls",
+    "sqlx-sqlite",
+    "sqlx-postgres"
+]
+
