@@ -10,6 +10,7 @@ mod m20240317_204255_create_user_thanks_table;
 // mod m20240317_204313_create_reactions_table;
 // mod m20240317_205009_create_user_name_changes_table;
 // mod m20240317_205921_create_user_staff_notes_table;
+mod m20240318_042811_create_test_seeds;
 
 pub struct Migrator;
 
@@ -27,6 +28,7 @@ impl MigratorTrait for Migrator {
             // Box::new(m20240317_204313_create_reactions_table::Migration),
             // Box::new(m20240317_205009_create_user_name_changes_table::Migration),
             // Box::new(m20240317_205921_create_user_staff_notes_table::Migration),
+            Box::new(m20240318_042811_create_test_seeds::Migration),
         ]
     }
 }

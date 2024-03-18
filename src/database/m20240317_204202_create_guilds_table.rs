@@ -13,12 +13,12 @@ impl MigrationTrait for Migration {
                     .if_not_exists()
                     .col(
                         ColumnDef::new(Guild::Id)
-                            .integer()
+                            .big_integer()
                             .not_null()
                             .auto_increment()
                             .primary_key(),
                     )
-                    .col(ColumnDef::new(Guild::DiscordId).integer().not_null())
+                    .col(ColumnDef::new(Guild::DiscordId).big_integer().not_null())
                     .col(ColumnDef::new(Guild::Name).string().not_null())
                     .to_owned(),
             )

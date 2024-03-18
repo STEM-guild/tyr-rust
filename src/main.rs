@@ -2,6 +2,8 @@
 
 mod utils;
 mod commands;
+mod entities;
+mod database;
 
 use poise::serenity_prelude as serenity;
 use std::{
@@ -15,6 +17,13 @@ use utils::{
     base::Data,
     handlers::on_error,
 };
+use sea_orm_migration::prelude::*;
+
+use database::Migrator;
+
+async fn seed_test() {
+    cli::run_cli(Migrator).await;
+}
 
 
 #[tokio::main]
@@ -91,6 +100,8 @@ async fn main() {
 
     //utils::db::databaseRunner().await.expect("TODO: panic message");
 
+
+
     let framework = poise::Framework::builder()
         .setup(move |ctx, _ready, framework| {
             Box::pin(async move {
@@ -113,5 +124,8 @@ async fn main() {
         .framework(framework)
         .await;
 
-    client.unwrap().start().await.unwrap()
+    //client.unwrap().start().await.unwrap()
+    //hello world
+
+    println!("hello world!")
 }

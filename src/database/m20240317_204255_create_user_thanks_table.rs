@@ -14,16 +14,16 @@ impl MigrationTrait for Migration {
                     .if_not_exists()
                     .col(
                         ColumnDef::new(UserThank::Id)
-                            .integer()
+                            .big_integer()
                             .not_null()
                             .auto_increment()
                             .primary_key(),
                     )
-                    .col(ColumnDef::new(UserThank::UserId).integer().not_null())
-                    .col(ColumnDef::new(UserThank::ThankTargetId).integer().not_null())
-                    .col(ColumnDef::new(UserThank::ChannelId).integer())
-                    .col(ColumnDef::new(UserThank::ThreadId).integer())
-                    .col(ColumnDef::new(UserThank::MessageId).integer())
+                    .col(ColumnDef::new(UserThank::UserId).big_integer().not_null())
+                    .col(ColumnDef::new(UserThank::ThankTargetId).big_integer().not_null())
+                    .col(ColumnDef::new(UserThank::ChannelId).big_integer())
+                    .col(ColumnDef::new(UserThank::ThreadId).big_integer())
+                    .col(ColumnDef::new(UserThank::MessageId).big_integer())
                     .col(ColumnDef::new(UserThank::CreatedAt).timestamp().default("CURRENT_TIMESTAMP"))
                     .col(ColumnDef::new(UserThank::DeletedAt).timestamp())
                     .to_owned(),

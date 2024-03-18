@@ -14,14 +14,14 @@ impl MigrationTrait for Migration {
                     .if_not_exists()
                     .col(
                         ColumnDef::new(GuildConfigOption::Id)
-                            .integer()
+                            .big_integer()
                             .not_null()
                             .auto_increment()
                             .primary_key(),
                     )
                     .col(
                         ColumnDef::new(GuildConfigOption::GuildId)
-                            .integer()
+                            .big_integer()
                             .not_null()
                     )
                     .col(ColumnDef::new(GuildConfigOption::OptionName).string().not_null())

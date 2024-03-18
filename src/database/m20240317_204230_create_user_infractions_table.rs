@@ -14,16 +14,16 @@ impl MigrationTrait for Migration {
                     .if_not_exists()
                     .col(
                         ColumnDef::new(UserInfraction::Id)
-                            .integer()
+                            .big_integer()
                             .not_null()
                             .auto_increment()
                             .primary_key(),
                     )
-                    .col(ColumnDef::new(UserInfraction::UserId).integer().not_null())
+                    .col(ColumnDef::new(UserInfraction::UserId).big_integer().not_null())
                     .col(ColumnDef::new(UserInfraction::CreatedAt).timestamp().not_null())
                     .col(ColumnDef::new(UserInfraction::DeletedAt).timestamp())
-                    .col(ColumnDef::new(UserInfraction::InfractionType).integer().not_null())
-                    .col(ColumnDef::new(UserInfraction::InfractionCategory).integer().not_null())
+                    .col(ColumnDef::new(UserInfraction::InfractionType).big_integer().not_null())
+                    .col(ColumnDef::new(UserInfraction::InfractionCategory).big_integer().not_null())
                     .col(ColumnDef::new(UserInfraction::InfractionNotes).string().not_null())
                     .to_owned(),
             )

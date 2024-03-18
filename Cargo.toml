@@ -12,7 +12,8 @@ env_logger = "0.11.2"
 openssl-sys = {version = "0.9.63", features = ["vendored"] }
 sea-orm = { version = "^0.12", features = [ "sqlx-sqlite", "sqlx-postgres", "runtime-tokio-rustls", "macros" ] }
 futures = "0.3.28"
-
+async-std = { version = "1", features = ["attributes", "tokio1"] }
+chrono = "0.4.34"
 [dependencies.sea-orm-migration]
 version = "0.12"
 features = [
