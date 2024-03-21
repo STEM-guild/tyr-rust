@@ -5,17 +5,13 @@ mod commands;
 
 use poise::serenity_prelude as serenity;
 use std::{
-    collections::HashMap,
-    str::FromStr,
-    sync::{Arc, Mutex},
-    time::Duration,
+    collections::HashMap, str::FromStr, sync::{Arc, Mutex}, time::Duration
 };
 
 use utils::{
-    base::Data,
-    handlers::on_error,
+    base::{Data,Error},
+    handlers::{self, on_error},
 };
-
 
 #[tokio::main]
 async fn main() {
@@ -72,14 +68,8 @@ async fn main() {
         // Enforce command checks even for owners (enforced by default)
         // Set to true to bypass checks, which is useful for testing
         skip_checks_for_owners: false,
-        event_handler: |_ctx, event, _framework, _data| {
-            Box::pin(async move {
-                println!(
-                    "Got an event in event handler: {:?}",
-                    event.snake_case_name()
-                );
-                Ok(())
-            })
+        event_handler: |ctx, event, framework, data| {
+            Box::pin(event_handler(ctx, event, framework, data))
         },
         ..Default::default()
     };
@@ -103,11 +93,61 @@ async fn main() {
     dotenv::dotenv().expect("Failed to load .env file");
     let token = dotenv::var("DISCORD_TOKEN").expect("Expected a token in the environment");
     let intents =
-        serenity::GatewayIntents::non_privileged() | serenity::GatewayIntents::MESSAGE_CONTENT;
-
+        serenity::GatewayIntents::non_privileged() | serenity::GatewayIntents::MESSAGE_CONTENT | serenity::GatewayIntents::GUILD_PRESENCES;
+        //                                                                                                ↑ for member caching ↑
     let client = serenity::ClientBuilder::new(token, intents)
         .framework(framework)
         .await;
 
     client.unwrap().start().await.unwrap()
+}
+
+async fn event_handler(
+    ctx: &serenity::Context,
+    event: &serenity::FullEvent,
+    _framework: poise::FrameworkContext<'_, Data, Error>,
+    _data: &Data,
+) -> Result<(), Error> {
+    match event {
+        serenity::FullEvent::Ready { data_about_bot, .. } => {
+            serenity::cache::Cache::set_max_messages(&ctx.cache, usize::MAX); // for running on lower end hardware, if need be, this should be reduced. cache clears every hour by default.
+            println!("Logged in as {}", data_about_bot.user.name);
+        }
+        serenity::FullEvent::MessageDelete { channel_id, deleted_message_id, guild_id } => {
+            dotenv::dotenv().expect("Failed to load .env file");
+            let message_log_channel_id = dotenv::var("MESSAGE_LOG_CHANNEL_ID").expect("Expected a message_log_channel_id in the environment");
+            let message_log_channel = serenity::ChannelId::from_str(&message_log_channel_id).expect("Invalid message_log_channel_id");
+
+            match guild_id {
+                Some(guild_id) => {
+                    match handlers::on_message_delete(ctx, channel_id, deleted_message_id, guild_id) {
+                        Err(why) => { println!("Failed to log message delete to log. {:?}", why); },
+                        Ok(content) => {
+                            match message_log_channel.say(&ctx.http.clone(), content[0].to_owned()).await{
+                                Err(why) => { println!("Failed to send message: {:?}", why); }
+                                Ok(_) => {
+                                    if content[1].chars().count() <= 1998 {
+                                        let say = format!("\"{}\"", content[1].to_owned());
+                                        if let Err(why) =message_log_channel.say(&ctx.http.clone(), say).await{
+                                            println!("Failed to send message: {:?}", why);
+                                        }
+                                    } else {
+                                        // TODO: should send as file. this will be triggered if a nitro user sends a long message as they have a limit of 4000 chars.
+                                        println!("someone deleted a very long message");
+                                        if let Err(why) =message_log_channel.say(&ctx.http.clone(), "Message too long to send, remind devs to fix this :)").await{
+                                            println!("Failed to send message: {:?}", why);
+                                        }
+                                    }
+                                    
+                                }
+                            }
+                        }
+                    }
+                },
+                None => () // DM, so we can exit
+            }    
+        }
+        _ => {}
+    }
+    Ok(())
 }
