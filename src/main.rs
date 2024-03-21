@@ -3,14 +3,14 @@
 mod utils;
 mod commands;
 
-use poise::serenity_prelude::{self as serenity, ChannelId, GuildId, MessageId};
+use poise::serenity_prelude as serenity;
 use std::{
     collections::HashMap, str::FromStr, sync::{Arc, Mutex}, time::Duration
 };
 
 use utils::{
     base::{Data,Error},
-    handlers::on_error,
+    handlers::{self, on_error},
 };
 
 #[tokio::main]
@@ -116,37 +116,38 @@ async fn event_handler(
         serenity::FullEvent::MessageDelete { channel_id, deleted_message_id, guild_id } => {
             dotenv::dotenv().expect("Failed to load .env file");
             let message_log_channel_id = dotenv::var("MESSAGE_LOG_CHANNEL_ID").expect("Expected a message_log_channel_id in the environment");
-            let c = serenity::ChannelId::from_str(&message_log_channel_id).expect("Invalid message_log_channel_id");
-            
-            let respone = get_cached_message(ctx, channel_id, deleted_message_id, guild_id.unwrap());
-            c.say(&ctx.http,respone.await).await?;    
+            let message_log_channel = serenity::ChannelId::from_str(&message_log_channel_id).expect("Invalid message_log_channel_id");
+
+            match guild_id {
+                Some(guild_id) => {
+                    match handlers::on_message_delete(ctx, channel_id, deleted_message_id, guild_id) {
+                        Err(why) => { println!("Failed to log message delete to log. {:?}", why); },
+                        Ok(content) => {
+                            match message_log_channel.say(&ctx.http.clone(), content[0].to_owned()).await{
+                                Err(why) => { println!("Failed to send message: {:?}", why); }
+                                Ok(_) => {
+                                    if content[1].chars().count() <= 1998 {
+                                        let say = format!("\"{}\"", content[1].to_owned());
+                                        if let Err(why) =message_log_channel.say(&ctx.http.clone(), say).await{
+                                            println!("Failed to send message: {:?}", why);
+                                        }
+                                    } else {
+                                        // TODO: should send as file. this will be triggered if a nitro user sends a long message as they have a limit of 4000 chars.
+                                        println!("someone deleted a very long message");
+                                        if let Err(why) =message_log_channel.say(&ctx.http.clone(), "Message too long to send, remind devs to fix this :)").await{
+                                            println!("Failed to send message: {:?}", why);
+                                        }
+                                    }
+                                    
+                                }
+                            }
+                        }
+                    }
+                },
+                None => () // DM, so we can exit
+            }    
         }
         _ => {}
     }
     Ok(())
-}
-
-async fn get_cached_message(ctx: &serenity::Context, channel_id: &ChannelId, message_id: &MessageId, guild_id: GuildId) -> String {
-    match serenity::cache::Cache::message(&ctx.cache, channel_id, message_id) {
-        Some(m) => {
-            println!("wpah {} {} {} {}", guild_id.to_string(), ctx.cache.settings().cache_channels, ctx.cache.user_count(), ctx.cache.unknown_members());
-            match ctx.cache.member(m.guild_id.unwrap(), m.author.id) {
-                Some(cached_author) => {
-                    format!("Message deleted. The message was sent by {} ({}, {}) in <#{}>:\n\"{}\"",
-                        cached_author.nick.clone().unwrap_or_else(|| m.author.global_name.clone().unwrap_or_else(|| String::from(""))),
-                        m.author.name,
-                        m.author.id.to_string(),
-                        m.channel_id,
-                        m.content,
-                    )
-                }
-                None => {
-                    String::from("Failed to get member from cache :(")
-                }
-            }
-        }
-        None => {
-            String::from("Failed to get message from cache :(")
-        }
-    }
 }
