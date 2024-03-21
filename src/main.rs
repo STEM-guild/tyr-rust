@@ -3,14 +3,14 @@
 mod utils;
 mod commands;
 
-use poise::serenity_prelude as serenity;
+use poise::serenity_prelude::{self as serenity, ChannelId, GuildId, MessageId};
 use std::{
     collections::HashMap, str::FromStr, sync::{Arc, Mutex}, time::Duration
 };
 
 use utils::{
     base::{Data,Error},
-    handlers::{self, on_error},
+    handlers::on_error,
 };
 
 #[tokio::main]
@@ -114,15 +114,39 @@ async fn event_handler(
             println!("Logged in as {}", data_about_bot.user.name);
         }
         serenity::FullEvent::MessageDelete { channel_id, deleted_message_id, guild_id } => {
+            dotenv::dotenv().expect("Failed to load .env file");
+            let message_log_channel_id = dotenv::var("MESSAGE_LOG_CHANNEL_ID").expect("Expected a message_log_channel_id in the environment");
+            let c = serenity::ChannelId::from_str(&message_log_channel_id).expect("Invalid message_log_channel_id");
             
-            match guild_id {
-                Some(guild_id) => {
-                    handlers::on_message_delete(ctx, channel_id, deleted_message_id, guild_id).await;
-                },
-                None => () // DM, so we can exit
-            }    
+            let respone = get_cached_message(ctx, channel_id, deleted_message_id, guild_id.unwrap());
+            c.say(&ctx.http,respone.await).await?;    
         }
         _ => {}
     }
     Ok(())
+}
+
+async fn get_cached_message(ctx: &serenity::Context, channel_id: &ChannelId, message_id: &MessageId, guild_id: GuildId) -> String {
+    match serenity::cache::Cache::message(&ctx.cache, channel_id, message_id) {
+        Some(m) => {
+            println!("wpah {} {} {} {}", guild_id.to_string(), ctx.cache.settings().cache_channels, ctx.cache.user_count(), ctx.cache.unknown_members());
+            match ctx.cache.member(m.guild_id.unwrap(), m.author.id) {
+                Some(cached_author) => {
+                    format!("Message deleted. The message was sent by {} ({}, {}) in <#{}>:\n\"{}\"",
+                        cached_author.nick.clone().unwrap_or_else(|| m.author.global_name.clone().unwrap_or_else(|| String::from(""))),
+                        m.author.name,
+                        m.author.id.to_string(),
+                        m.channel_id,
+                        m.content,
+                    )
+                }
+                None => {
+                    String::from("Failed to get member from cache :(")
+                }
+            }
+        }
+        None => {
+            String::from("Failed to get message from cache :(")
+        }
+    }
 }
