@@ -1,4 +1,4 @@
-// these really should be exclusive to dev team roles but we cross that bridge when it comes across us
+// these really should be exclusive to dev team roles, but we cross that bridge when it comes across us
 
 use std::str::FromStr;
 
@@ -7,7 +7,8 @@ use poise::serenity_prelude;
 use crate::utils::base::{ Context, Error };
 
 #[poise::command(prefix_command, track_edits, slash_command)]
-pub async fn ping(_ctx: Context<'_>) -> Result<(), Error> {
+pub async fn ping(ctx: Context<'_>) -> Result<(), Error> {
+    ctx.reply(format!("Pong! {}ms", ctx.ping().await.as_millis())).await?;
     Ok(())
 }
 
