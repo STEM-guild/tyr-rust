@@ -2,6 +2,7 @@
 
 mod utils;
 mod commands;
+mod logging;
 
 use poise::serenity_prelude as serenity;
 use std::{
@@ -10,6 +11,7 @@ use std::{
     sync::{Arc, Mutex},
     time::Duration,
 };
+use dotenv_codegen::dotenv;
 
 use utils::{
     base::Data,
@@ -72,20 +74,16 @@ async fn main() {
         // Enforce command checks even for owners (enforced by default)
         // Set to true to bypass checks, which is useful for testing
         skip_checks_for_owners: false,
-        event_handler: |_ctx, event, _framework, _data| {
+        event_handler: |ctx, event, framework, data| {
             Box::pin(async move {
-                println!(
-                    "Got an event in event handler: {:?}",
-                    event.snake_case_name()
-                );
+                logging::event_handler::event_handler(ctx, event, framework, data).await;
                 Ok(())
             })
         },
         ..Default::default()
     };
 
-    dotenv::dotenv().expect("Failed to load .env file");
-    let guild_id = dotenv::var("GUILD_ID").expect("Expected a guild_id in the environment");
+    let guild_id = dotenv!("GUILD_ID");
 
     let framework = poise::Framework::builder()
         .setup(move |ctx, _ready, framework| {
@@ -100,8 +98,7 @@ async fn main() {
         .options(options)
         .build();
 
-    dotenv::dotenv().expect("Failed to load .env file");
-    let token = dotenv::var("DISCORD_TOKEN").expect("Expected a token in the environment");
+    let token = dotenv!("DISCORD_TOKEN");
     let intents =
         serenity::GatewayIntents::non_privileged() | serenity::GatewayIntents::MESSAGE_CONTENT;
 

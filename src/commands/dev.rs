@@ -1,6 +1,7 @@
 // these really should be exclusive to dev team roles, but we cross that bridge when it comes across us
 
 use std::str::FromStr;
+use dotenv_codegen::dotenv;
 
 use poise::serenity_prelude;
 
@@ -16,9 +17,8 @@ pub async fn ping(ctx: Context<'_>) -> Result<(), Error> {
 // guild and global contexts
 #[poise::command(prefix_command)]
 pub async fn register(ctx: Context<'_>) -> Result<(), Error> {
-    dotenv::dotenv().expect("Failed to load .env file");
-    let dev_role_id = dotenv::var("DEV_ROLE_ID").expect("Expected a dev_role_id in the environment");
-    let guild_id = dotenv::var("GUILD_ID").expect("Expected a guild_id in the environment");
+    let dev_role_id = dotenv!("DEV_ROLE_ID");
+    let guild_id = dotenv!("GUILD_ID");
 
     if ctx.author().has_role(ctx.http(), serenity_prelude::GuildId::from_str(&guild_id).expect("invalid guild ID"), serenity_prelude::RoleId::from_str(&dev_role_id).expect("invalid dev role ID")
 ).await? {
