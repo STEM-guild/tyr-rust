@@ -11,7 +11,7 @@ pub async fn event_handler(
 ) {
     match event {
         serenity::FullEvent::Ready { .. } => {
-            serenity::cache::Cache::set_max_messages(&ctx.cache, usize::MAX)
+            serenity::cache::Cache::set_max_messages(&ctx.cache, usize::MAX) // Ticking time bomb
         }
         serenity::FullEvent::MessageUpdate {
             old_if_available,
