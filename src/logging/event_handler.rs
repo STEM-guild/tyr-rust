@@ -1,10 +1,7 @@
-use std::str::FromStr;
-use dotenv_codegen::dotenv;
 use poise::serenity_prelude as serenity;
-use poise::serenity_prelude::{CreateEmbed, CreateEmbedAuthor, CreateEmbedFooter, CreateMessage};
-use crate::utils::base::Data;
-
-type Error = Box<dyn std::error::Error + Send + Sync>;
+use crate::logging::message_delete::log_message_delete;
+use crate::logging::message_edit::log_message_edit;
+use crate::utils::base::{Data, Error};
 
 pub async fn event_handler(
     ctx: &serenity::Context,
@@ -20,31 +17,12 @@ pub async fn event_handler(
             old_if_available,
             new,
             event
-        } => {
-            let author = event.author.as_ref().expect("Author missing from MessageUpdate event");
-            let old_message = old_if_available.as_ref();
-            let new_message = new.as_ref();
-
-            let embed = CreateEmbed::new()
-                .author(CreateEmbedAuthor::new(format!("{} ({})", ({
-                    match author.discriminator {
-                        None => {author.name.clone()}
-                        Some(discriminator) => {format!("{}#{}", &author.name, discriminator)}
-                    }
-                }), author.id)).icon_url(author.avatar_url().unwrap_or_else(|| "".to_string())))
-                .title(if new_message.is_some() { "Link to message" } else { "" })
-                .url({
-                    if let Some(new_message) = new_message {
-                        new_message.link()
-                    } else { "".to_string() }
-                })
-                .footer(CreateEmbedFooter::new(format!("Message {} in channel {}", event.id, event.channel_id))
-                )
-                .field("Original message", if old_message.is_none() {"No message content available"} else {&old_message.unwrap().content}, false)
-                .field("Edited Message", if new_message.is_none() {"No message content available"} else {&new_message.unwrap().content}, false);
-            
-            serenity::ChannelId::from_str(dotenv!("MESSAGE_EDIT")).expect("Unable to find Message Edit log channel by id").send_message(&ctx.http, CreateMessage::new().embed(embed)).await.ok();
-        }
+        } => { log_message_edit(ctx, old_if_available, new, event).await; }
+        serenity::FullEvent::MessageDelete {
+            channel_id,
+            deleted_message_id,
+            guild_id: _guild_id
+        } => { log_message_delete(ctx, channel_id, deleted_message_id).await; }
         _ => {}
     }
 }
