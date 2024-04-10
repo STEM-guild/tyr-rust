@@ -36,6 +36,7 @@ async fn main() {
             commands::messages::jask(),
             commands::messages::ask(),
             commands::dev::register(),
+            commands::dev::deleteself()
         ],
         prefix_options: poise::PrefixFrameworkOptions {
             prefix: Some("!".into()),
@@ -59,7 +60,7 @@ async fn main() {
         // This code is run after a command if it was successful (returned Ok)
         post_command: |ctx| {
             Box::pin(async move {
-                println!("Executed command {}!", ctx.command().qualified_name);
+                println!("Executed command {} successfully!", ctx.command().qualified_name);
             })
         },
         // Every command invocation must pass this check to continue execution

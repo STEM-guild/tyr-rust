@@ -1,15 +1,25 @@
 // these really should be exclusive to dev team roles, but we cross that bridge when it comes across us
 
 use std::str::FromStr;
+use std::time::Duration;
 use dotenv_codegen::dotenv;
 
 use poise::serenity_prelude;
+use poise::serenity_prelude::CreateMessage;
 
 use crate::utils::base::{ Context, Error };
 
 #[poise::command(prefix_command, track_edits, slash_command)]
 pub async fn ping(ctx: Context<'_>) -> Result<(), Error> {
     ctx.reply(format!("Pong! {}ms", ctx.ping().await.as_millis())).await?;
+    Ok(())
+}
+
+#[poise::command(prefix_command, track_edits, slash_command)]
+pub async fn deleteself(ctx: Context<'_>) -> Result<(), Error> {
+    let msg = ctx.channel_id().send_message(ctx.http(), CreateMessage::new().content("Deleting in 5s!")).await?;
+    tokio::time::sleep(Duration::from_secs(5)).await;
+    msg.delete(ctx.http()).await?;
     Ok(())
 }
 
