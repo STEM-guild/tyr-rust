@@ -10,7 +10,7 @@ pub async fn log_message_edit(ctx: &serenity::Context, old_if_available: &Option
     let new_message = new.as_ref();
 
     let embed = CreateEmbed::new()
-        .author(CreateEmbedAuthor::new(format!("{} ({})", helpers::format_username(author), author.id)).icon_url(author.avatar_url().unwrap_or_else(|| "".to_string())))
+        .author(CreateEmbedAuthor::new(format!("{} ({})", helpers::format_user(author), author.id)).icon_url(author.avatar_url().unwrap_or_else(|| "".to_string())))
         .title(if new_message.is_some() { "Link to message" } else { "" })
         .url({
         if let Some(new_message) = new_message {

@@ -19,11 +19,11 @@ pub async fn log_message_delete(ctx: &serenity::Context, channel_id: &ChannelId,
     }
     let embed = if let Some(message) = ctx.cache.message(channel_id, message_id) {
         CreateEmbed::new()
-            .author(CreateEmbedAuthor::new(format!("{} ({})", helpers::format_username(&message.author), &message.author.id)).url(&message.author.avatar_url().unwrap_or_else(|| "".to_string())))
+            .author(CreateEmbedAuthor::new(format!("{} ({})", helpers::format_user(&message.author), &message.author.id)).url(&message.author.avatar_url().unwrap_or_else(|| "".to_string())))
             .field("Deleted message", &message.content, false)
             .field("Likely deleted by", {
                 if let Some(deleter_user_id) = deleter_user_id {
-                    format!("<@{}> ({})", deleter_user_id, deleter_user_id)
+                    helpers::format_user_id(deleter_user_id)
                 } else {
                     "Themselves".to_string()
                 }
