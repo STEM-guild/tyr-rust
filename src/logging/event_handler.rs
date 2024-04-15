@@ -19,7 +19,7 @@ pub async fn event_handler(
             old_if_available,
             new,
             event
-        } => { log_message_edit(ctx, old_if_available, new, event).await    ; }
+        } => { log_message_edit(ctx, old_if_available, new, event).await; }
         serenity::FullEvent::MessageDelete {
             channel_id,
             deleted_message_id,
