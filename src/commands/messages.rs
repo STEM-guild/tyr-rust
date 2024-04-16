@@ -195,8 +195,7 @@ pub async fn ask(
 
 #[allow(dead_code)]
 fn channel_id_from_key(key: &str) -> Result<poise::serenity_prelude::model::id::ChannelId,ParseIntError>{
-    dotenv::dotenv().expect("Failed to load .env file");
-    let channel_id = dotenv::var(key).expect(&format!("Expected {} in the environment", key));        
+    let channel_id = dotenv::var(key).expect(&format!("Expected {} in the environment", key));
     match poise::serenity_prelude::model::id::ChannelId::from_str(&channel_id) {
         Err(why) => {
             Result::Err(why)
