@@ -1,12 +1,30 @@
 # tyr-rust
 Moderation bot
 
-## example of how to use the .env filter
+## Developing on WSL
+Create an ssh key pair for yourself to securely connect to your github
+`ssh-keygen -t ed25519`
 
-This
+Click enter on all the prompts, then view the public key with
+`cat ~/.ssh/id_ed25519.pub`
 
-![](https://media.discordapp.net/attachments/917043544617795667/1214987904976166952/image.png?ex=65fb1ca9&is=65e8a7a9&hm=8a6534e9ee782f363d4973b7d65de718dbcbace8ee1257b1bed94eb62f052cdd&=&format=webp&quality=lossless&width=486&height=662)
+Copy the outputted line (it starts with ssh-ed25519) 
+And paste it into your github ssh public keys at: https://github.com/settings/ssh/new
 
-Will be commited as
+Inside wsl, make a working directory for your code
 
-![](https://media.discordapp.net/attachments/917043544617795667/1214989755897487480/image.png?ex=65fb1e63&is=65e8a963&hm=6c3f91db908c3d39bc9deb9c7a6483c8fc8508e5dfa54607e6eb6100a7499dc9&=&format=webp&quality=lossless&width=600&height=662)
+Install project dependencies
+`sudo apt-get update && sudo apt-get upgrade && sudo apt-get install rustc git nano cargo screen`
+
+Clone the repo
+`mkdir ~/code/ && cd ~/code && git clone git@github.com:STEM-guild/tyr-rust.git && cd tyr-rust`
+
+Configure the runtime environment
+`cp .env.example .env && nano .env`
+
+Press Ctrl + X when you're happy with the changes, then press Y twice
+
+Launch the bot
+`cargo run`
+
+n.b. the first run will take longer due to compiling all the dependencies in the cargo file.
