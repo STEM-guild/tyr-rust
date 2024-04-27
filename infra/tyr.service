@@ -1,0 +1,24 @@
+[Unit]
+Description=Tyr bot
+Requires=network-online.target
+
+# Setup this file in /etc/systemd/system/tyr.service   then run systemctl enable tyr; systemctl start tyr;
+
+[Service]
+User=tyr
+Group=tyr
+Environment=PATH=/usr/bin/:/home/caius/.local/bin
+Type=simple
+WorkingDirectory=/home/tyr/tyr-rust
+ExecStart=/usr/bin/cargo run
+ExecReload=/bin/kill -s HUP $MAINPID
+ExecStop=/bin/kill -s QUIT $MAINPID
+KillMode=process
+Restart=always
+StartLimitIntervalSec=5
+StartLimitBurst=1
+
+[Install]
+WantedBy=multi-user.target
+
+
