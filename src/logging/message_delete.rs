@@ -28,12 +28,10 @@ pub async fn log_message_delete(ctx: &serenity::Context, channel_id: &ChannelId,
                     "Themselves".to_string()
                 }
             }, false)
-            .footer(CreateEmbedFooter::new(format!("Message {} in {}", message_id, channel_id)))
-            .timestamp(Timestamp::now())
+            .footer(CreateEmbedFooter::new(format!("{}", message.author.id)))
     } else {
         CreateEmbed::new()
             .footer(CreateEmbedFooter::new(format!("Message {} in {}", message_id, channel_id)))
-            .timestamp(Timestamp::now())
     };
 
     ChannelId::from_str(dotenv!("MESSAGE_DELETE")).expect("Unable to find Message Delete log channel by id").send_message(&ctx.http, CreateMessage::new().embed(embed)).await.ok();

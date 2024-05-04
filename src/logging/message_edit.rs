@@ -1,7 +1,7 @@
 use std::str::FromStr;
 use dotenv_codegen::dotenv;
 use poise::serenity_prelude as serenity;
-use poise::serenity_prelude::{CreateEmbed, CreateEmbedAuthor, CreateEmbedFooter, Message, MessageUpdateEvent, CreateMessage, Timestamp};
+use poise::serenity_prelude::{CreateEmbed, CreateEmbedAuthor, CreateEmbedFooter, Message, MessageUpdateEvent, CreateMessage};
 use crate::utils::helpers;
 
 pub async fn log_message_edit(ctx: &serenity::Context, old_if_available: &Option<Message>, new: &Option<Message>, event: &MessageUpdateEvent){
@@ -17,7 +17,7 @@ pub async fn log_message_edit(ctx: &serenity::Context, old_if_available: &Option
         new_message.link()
         } else { "".to_string() }
         })
-        .footer(CreateEmbedFooter::new(format!("Message {} in channel {}", event.id, event.channel_id))
+        .footer(CreateEmbedFooter::new(format!("{}", author.id))
         )
         .field("Original message", if let Some(old_message) = old_message {&old_message.content} else {"No message content available"}, false)
         .field("Edited Message",
@@ -27,8 +27,7 @@ pub async fn log_message_edit(ctx: &serenity::Context, old_if_available: &Option
                         new_message.content
                     } else {
                         "No message content available".to_string()
-                    }, false)
-        .timestamp(Timestamp::now());
+                    }, false);
 
     serenity::ChannelId::from_str(dotenv!("MESSAGE_EDIT")).expect("Unable to find Message Edit log channel by id").send_message(&ctx.http, CreateMessage::new().embed(embed)).await.ok();
 }
