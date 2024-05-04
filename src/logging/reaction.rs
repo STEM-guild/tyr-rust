@@ -1,7 +1,7 @@
 use std::str::FromStr;
 use dotenv_codegen::dotenv;
 use poise::serenity_prelude as serenity;
-use poise::serenity_prelude::{ChannelId, CreateEmbed, CreateEmbedFooter, CreateMessage, MessageId, Reaction, Timestamp};
+use poise::serenity_prelude::{ChannelId, CreateEmbed, CreateEmbedFooter, CreateMessage, MessageId, Reaction};
 use crate::utils::helpers;
 
 pub async fn reaction_create(ctx: &serenity::Context, add_reaction: &Reaction){
@@ -12,8 +12,7 @@ pub async fn reaction_create(ctx: &serenity::Context, add_reaction: &Reaction){
         .field("Author", if let Some(user_id) = add_reaction.user_id {
             helpers::format_user_id(user_id)
         } else { "Unknown".to_string() }, true)
-        .footer(CreateEmbedFooter::new(format!("Message {} in {}", add_reaction.message_id, add_reaction.channel_id)))
-        .timestamp(Timestamp::now());
+        .footer(CreateEmbedFooter::new(format!("{}", add_reaction.user_id.map(|user_id| user_id.get()).unwrap_or(0))));
 
         ChannelId::from_str(dotenv!("REACTION")).expect("Unable to find Reaction log channel by id").send_message(&ctx.http, CreateMessage::new().embed(embed)).await.ok();
 }
@@ -26,8 +25,7 @@ pub async fn reaction_remove(ctx: &serenity::Context, removed_reaction: &Reactio
         .field("Author", if let Some(user_id) = removed_reaction.user_id {
             helpers::format_user_id(user_id)
         } else { "Unknown".to_string() }, true)
-        .footer(CreateEmbedFooter::new(format!("Message {} in {}", removed_reaction.message_id, removed_reaction.channel_id)))
-        .timestamp(Timestamp::now());
+        .footer(CreateEmbedFooter::new(format!("{}", removed_reaction.user_id.map(|user_id| user_id.get()).unwrap_or(0))));
 
     ChannelId::from_str(dotenv!("REACTION")).expect("Unable to find Reaction log channel by id").send_message(&ctx.http, CreateMessage::new().embed(embed)).await.ok();
 }
@@ -43,8 +41,7 @@ pub async fn reaction_remove_all(ctx: &serenity::Context, channel_id: &ChannelId
         .title("Link to message")
         .url(removed_from_message_id.link_ensured(&ctx.http, channel_id.clone(), guild_id).await)
         .description("**All reactions removed**")
-        .footer(CreateEmbedFooter::new(format!("Message {} in {}", removed_from_message_id, channel_id)))
-        .timestamp(Timestamp::now());
+        .footer(CreateEmbedFooter::new(format!("Message {} in {}", removed_from_message_id, channel_id)));
 
     ChannelId::from_str(dotenv!("REACTION")).expect("Unable to find Reaction log channel by id").send_message(&ctx.http, CreateMessage::new().embed(embed)).await.ok();
 }
@@ -54,8 +51,7 @@ pub async fn reaction_remove_emoji(ctx: &serenity::Context, removed_reactions: &
         .title("Link to message")
         .url(removed_reactions.message_id.link(removed_reactions.channel_id, removed_reactions.guild_id))
         .field("Reaction purged from message", format!("{}", removed_reactions.emoji), false)
-        .footer(CreateEmbedFooter::new(format!("Message {} in {}", removed_reactions.message_id, removed_reactions.channel_id)))
-        .timestamp(Timestamp::now());
+        .footer(CreateEmbedFooter::new(format!("Message {} in {}", removed_reactions.message_id, removed_reactions.channel_id)));
 
     ChannelId::from_str(dotenv!("REACTION")).expect("Unable to find Reaction log channel by id").send_message(&ctx.http, CreateMessage::new().embed(embed)).await.ok();
 }
